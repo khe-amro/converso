@@ -73,45 +73,9 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 4. Supabase Database Migration (SQL)
-To set up your database tables and Row Level Security (RLS) policies correctly for Clerk integration, run this script inside your **Supabase SQL Editor**:
 
-```sql
--- 1. Create session history table
-CREATE TABLE public.session_history (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    companion_id UUID REFERENCES public.companions(id) ON DELETE CASCADE,
-    user_id      TEXT NOT NULL, -- Plain text to support Clerk IDs
-    created_at   TIMESTAMPTZ DEFAULT now()
-);
 
--- 2. Create bookmarks table
-CREATE TABLE public.bookmarks (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    companion_id UUID NOT NULL REFERENCES public.companions(id) ON DELETE CASCADE,
-    user_id      TEXT NOT NULL, -- Plain text to support Clerk IDs
-    created_at   TIMESTAMPTZ DEFAULT now(),
-    CONSTRAINT bookmarks_user_companion_unique UNIQUE (user_id, companion_id)
-);
-
--- 3. Enable RLS
-ALTER TABLE public.bookmarks ENABLE ROW LEVEL SECURITY;
-
--- 4. Setup RLS policies comparing against Clerk's JWT sub claim directly
-CREATE POLICY "Users can view own bookmarks"
-    ON public.bookmarks FOR SELECT
-    USING (user_id = (auth.jwt() ->> 'sub'));
-
-CREATE POLICY "Users can insert own bookmarks"
-    ON public.bookmarks FOR INSERT
-    WITH CHECK (user_id = (auth.jwt() ->> 'sub'));
-
-CREATE POLICY "Users can delete own bookmarks"
-    ON public.bookmarks FOR DELETE
-    USING (user_id = (auth.jwt() ->> 'sub'));
-```
-
-### 5. Running the Application
+### 4  . Running the Application
 ```bash
 npm run dev
 ```
